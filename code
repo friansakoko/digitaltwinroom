@@ -1,0 +1,78 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+
+# Load data from Excel
+file_path = "Metadata - 2D - 6 Lantai.xlsx"  # Update this with your actual file path
+df = pd.read_excel(file_path)
+
+# Convert coordinate, dimension, temperature, and floor columns to usable format
+df["x"], df["y"] = zip(*df["Coordinate (x,y)"].apply(lambda xy: map(int, xy.strip("()").split(","))))
+df["length"], df["width"] = zip(*df["Dimension (p,l)"].apply(lambda pl: map(int, pl.strip("()").split(","))))
+
+# Define color mapping based on temperature
+def get_color(temp):
+    if temp > 27:
+        return "red"  # Hot room
+    elif temp < 21:
+        return "lightblue"  # Cold room
+    else:
+        return "lightgray"  # Normal temperature
+
+df["color"] = df["Room Temperature"].apply(get_color)
+
+# Get unique floors
+floors = df["Floor"].unique()
+num_floors = len(floors)
+
+# Create figure with subplots for each floor
+fig, axes = plt.subplots(num_floors, 1, figsize=(12, 4 * num_floors))  
+if num_floors == 1:
+    axes = [axes]  # Ensure axes is iterable if only one floor exists
+
+# Building floor dimensions
+building_x, building_y, building_length, building_width = 0, 0, 63, 14
+
+# Plot each floor separately
+for ax, floor in zip(axes, floors):
+    floor_data = df[df["Floor"] == floor]
+    
+    # Draw the building background
+    building_floor = patches.Rectangle(
+        (building_x, building_y), building_length, building_width, 
+        edgecolor='black', facecolor='lightgray', linewidth=2, linestyle='dashed'
+    )
+    ax.add_patch(building_floor)
+
+    # Plot each room
+    for _, row in floor_data.iterrows():
+        room_rect = patches.Rectangle(
+            (row["x"], row["y"]), row["length"], row["width"], 
+            edgecolor='black', facecolor=row["color"], linewidth=2
+        )
+        ax.add_patch(room_rect)
+        ax.text(row["x"] + row["length"] / 2, row["y"] + row["width"] / 2, 
+                f"{row['Room']}\n{row['Room Temperature']}°C", 
+                fontsize=10, ha='center', va='center', color='black', fontweight='bold')
+
+    # Set custom axis limits
+    ax.set_xlim(-5, 70)
+    ax.set_ylim(-4, 20)
+    ax.set_xticks(range(0, 70, 2))
+    ax.set_yticks(range(0, 20, 2))
+    ax.grid(True, linestyle="--", alpha=0.5)
+    
+    # Labels and title for each floor
+    ax.set_xlabel("X-axis (m)")
+    ax.set_ylabel("Y-axis (m)")
+    ax.set_title(f"2D Floor Plan - Floor {floor}")
+
+# Add a common legend
+red_patch = patches.Patch(color='red', label='>27°C (Hot)')
+blue_patch = patches.Patch(color='lightblue', label='<21°C (Cold)')
+yellow_patch = patches.Patch(color='lightgray', label='21°C - 27°C (Normal)')
+fig.legend(handles=[red_patch, yellow_patch, blue_patch], loc="upper right")
+
+# Adjust layout and show plot
+plt.tight_layout()
+plt.show()
