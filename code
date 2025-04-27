@@ -12,7 +12,7 @@ df["length"], df["width"] = zip(*df["Dimension (p,l)"].apply(lambda pl: map(int,
 
 # Define color mapping based on temperature
 def get_color(temp):
-    if temp > 27:
+    if temp > 26:
         return "red"  # Hot room
     elif temp < 21:
         return "lightblue"  # Cold room
@@ -68,9 +68,9 @@ for ax, floor in zip(axes, floors):
     ax.set_title(f"2D Floor Plan - Floor {floor}")
 
 # Add a common legend
-red_patch = patches.Patch(color='red', label='>27°C (Hot)')
+red_patch = patches.Patch(color='red', label='>26°C (Hot)')
 blue_patch = patches.Patch(color='lightblue', label='<21°C (Cold)')
-yellow_patch = patches.Patch(color='lightgray', label='21°C - 27°C (Normal)')
+yellow_patch = patches.Patch(color='lightgray', label='21°C - 26°C (Normal)')
 fig.legend(handles=[red_patch, yellow_patch, blue_patch], loc="upper right")
 
 # Adjust layout and show plot
